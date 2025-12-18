@@ -1,6 +1,13 @@
 #include "kernel.h"
 #include "common.h"
 
+#define PANIC(fmt, ...) \
+    do {                \
+        printf("PANIC: %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__);  \
+        while (1) {}    \
+    } while (0);
+    
+
 /* import symbols from the linker */
 extern char __bss[], __bss_end[], __stack_top[];
 
@@ -43,6 +50,9 @@ void kernel_main(void)
 
     printf("\n\nHello, World!\n");
     printf("1 + 2 = %d, %x\n", 1 + 2, (1 << 31) >> 31);
+
+    PANIC("Oops! \n");
+    printf("NOT REACHABLE! ");
 
     for (;;)
         __asm__ __volatile__("wfi");    // wait for interruption
