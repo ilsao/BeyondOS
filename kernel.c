@@ -1,26 +1,8 @@
 #include "kernel.h"
 #include "common.h"
 
-/* type define */
-typedef unsigned char   uint8_t;
-typedef unsigned short  uint16_t;
-typedef unsigned int    uint32_t;
-typedef unsigned long   uint64_t;
-typedef uint32_t        size_t;
-
 /* import symbols from the linker */
 extern char __bss[], __bss_end[], __stack_top[];
-
-/* C-like function implementations */
-void *memset(void *buf, int value, size_t n)
-{
-    uint8_t *p = (uint8_t *)buf;
-    while (n > 0) {
-        *p++ = value;
-        n--;
-    }
-    return buf;
-}
 
 struct sbiret sbi_call(long arg0, long arg1, long arg2, long arg3, long arg4, long arg5, long fid, long eid)
 {
