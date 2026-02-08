@@ -1,11 +1,6 @@
 #pragma once
 #include "common.h"
 
-struct sbiret {
-    long err;
-    long value;
-};
-
 struct stake_frame {
     uint32_t ra;
     uint32_t gp;
@@ -39,16 +34,3 @@ struct stake_frame {
     uint32_t s11;
     uint32_t sp;
 }__attribute__((packed));
-
-#define READ_CSR(reg)                                           \
-    ({                                                          \
-        unsigned long __tmp;                                    \
-        __asm__ __volatile__("csrr %0, " #reg : "=r"(__tmp));   \
-        __tmp;                                                  \
-    })
-
-#define WRITE_CSR(reg, value)                                   \
-    do {                                                        \
-       uint32_t __tmp = (value);                                \
-       __asm__ __volatile__("csrw " #reg ", %0" ::"r"(__tmp));  \
-    } while(0)

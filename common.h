@@ -23,6 +23,30 @@ typedef uint32_t            vaddr_t;    // virtual addr
 #define is_aligned(value, align) __builtin_is_aligned(value, align)
 #define offsetof(type, member)   __builtin_offsetof(type, member)
 
+#define PANIC(fmt, ...) \
+    do {                \
+        printf("PANIC: %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__);  \
+        while (1) {}    \
+    } while (0);
+
+#define READ_CSR(reg)                                           \
+    ({                                                          \
+        unsigned long __tmp;                                    \
+        __asm__ __volatile__("csrr %0, " #reg : "=r"(__tmp));   \
+        __tmp;                                                  \
+    })
+
+#define WRITE_CSR(reg, value)                                   \
+    do {                                                        \
+       uint32_t __tmp = (value);                                \
+       __asm__ __volatile__("csrw " #reg ", %0" ::"r"(__tmp));  \
+    } while(0)
+
+struct sbiret {
+    long err;
+    long value;
+};
+
 void *memset(void *buf, char c, size_t n);
 void *memcpy(void *dst, const void *src, size_t n);
 void *strcpy(char *dst, const char *src);
