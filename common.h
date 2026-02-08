@@ -13,6 +13,8 @@ typedef uint32_t            vaddr_t;    // virtual addr
 #define false 0
 #define NULL ((void *) 0)
 
+#define PAGE_SIZE 4096
+
 #define va_list  __builtin_va_list
 #define va_start __builtin_va_start
 #define va_end   __builtin_va_end

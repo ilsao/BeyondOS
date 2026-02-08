@@ -133,6 +133,21 @@ void putchar(char ch)
     sbi_call(ch, 0, 0, 0, 0, 0, 0, 1);
 }
 
+extern char __free_ram[], __free_ram_end[];
+paddr_t alloc_pages(uint32_t n)
+{
+    // only set once
+    static paddr_t next_paddr = (paddr_t) __free_ram;
+    paddr_t paddr = next_paddr;
+    next_paddr += n * PAGE_SIZE;
+
+    if (next_paddr > (paddr_t) __free_ram_end)
+        PANIC("out of memory");
+
+    memset((void *) paddr, 0, n * PAGE_SIZE);
+    return paddr;
+}
+
 /* kernel main */
 void kernel_main(void)
 {
@@ -140,6 +155,13 @@ void kernel_main(void)
     memset((void *)__bss, 0, (size_t)__bss_end - (size_t)__bss);
 
     printf("\n\nHello, World!\n");
+
+    paddr_t paddr0 = alloc_pages(2);
+    paddr_t paddr1 = alloc_pages(1);
+    printf("alloc_page test paddr0 = %x\n", paddr0);
+    printf("alloc_page test paddr1 = %x\n", paddr1);
+
+    PANIC("booted! ");
 
     WRITE_CSR(stvec, (uint32_t) kernel_entry);
     __asm__ __volatile__("unimp");   printf("1 + 2 = %d, %x\n", 1 + 2, (1 << 31) >> 31);
@@ -152,7 +174,7 @@ void kernel_main(void)
 }
 
 /* booter */
-__attribute__((section(".text.boot"), naked));  // func boot -> .text.boot = 0x80200000
+__attribute__((section(".text.boot"), naked))  // func boot -> .text.boot = 0x80200000
 void boot(void)
 {
     __asm__ __volatile__(
