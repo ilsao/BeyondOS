@@ -7,6 +7,29 @@
 /* import symbols from the linker */
 extern char __bss[], __bss_end[], __stack_top[];
 
+struct process *proc_a, *proc_b;
+void proc_a_entry()
+{
+    printf("starting process A\n");
+    while (1) {
+        putchar('A');
+        // buggy here, incorrectly store regs from a to main stack
+        switch_context(&proc_a->sp, &proc_b->sp);
+        delay();
+    }
+}
+
+void proc_b_entry()
+{
+    printf("starting process B\n");
+    while (1) {
+        putchar('B');
+        // buggy here, incorrectly store regs from a to main stack
+        switch_context(&proc_b->sp, &proc_a->sp);
+        delay();
+    }
+}
+
 /* kernel main */
 void kernel_main(void)
 {
@@ -15,6 +38,10 @@ void kernel_main(void)
 
     printf("\n\nHello, World!\n");
 
+    proc_a = create_process((uint32_t) proc_a_entry);
+    proc_b = create_process((uint32_t) proc_b_entry);
+    proc_a_entry();
+
     paddr_t paddr0 = alloc_pages(2);
     paddr_t paddr1 = alloc_pages(1);
     printf("alloc_page test paddr0 = %x\n", paddr0);
@@ -22,17 +49,10 @@ void kernel_main(void)
 
     // register exception entry
     WRITE_CSR(stvec, (uint32_t) kernel_entry);
-    __asm__ __volatile__("unimp");   
     
     printf("1 + 2 = %d, %x\n", 1 + 2, (1 << 31) >> 31);
 
     PANIC("booted! ");
-
-    PANIC("Oops! \n");
-    printf("NOT REACHABLE! ");
-
-    for (;;)
-        __asm__ __volatile__("wfi");    // wait for interruption
 }
 
 /* booter */
