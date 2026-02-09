@@ -105,8 +105,6 @@ void yield(void)
     if (next == current_proc)
         return;
 
-    printf("&next->stack[sizeof(next->stack)] = %x\n", &next->stack[sizeof(next->stack)]);
-
     // store stack to sscratch for exception handler
     __asm__ __volatile__(
         "csrw sscratch, %[sscratch]\n"

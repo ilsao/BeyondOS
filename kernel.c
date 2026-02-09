@@ -13,7 +13,6 @@ struct process *proc_a, *proc_b;
 void proc_a_entry()
 {
     printf("starting process A\n");
-    __asm__ __volatile__("unimp");
     while (1) {
         putchar('A');
         yield();
