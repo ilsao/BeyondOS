@@ -5,8 +5,7 @@
 #include "exception.h"
 
 /* import symbols from the linker */
-extern char __bss[], __bss_end[], __stack_top[];
-
+extern char __bss[], __bss_end[], __stack_top[], __kernel_base[], __free_ram_end[];
 extern struct process *current_proc, *idle_proc;
 
 struct process *proc_a, *proc_b;
@@ -40,6 +39,9 @@ void kernel_main(void)
     WRITE_CSR(stvec, (uint32_t) kernel_entry);
 
     printf("\n\nHello, World!\n");
+
+    printf("\n__kernel_base: %x\n", __kernel_base);
+    printf("__free_ram_end: %x\n\n", __free_ram_end);
 
     idle_proc = create_idle_process();
     current_proc = idle_proc;

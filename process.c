@@ -1,5 +1,7 @@
 #include "process.h"
 
+extern char __kernel_base[], __free_ram_end[];
+
 static struct process procs[PROCS_MAX];
 struct process *current_proc, *idle_proc;
 
@@ -76,9 +78,17 @@ struct process *create_process(uint32_t pc)
     *--sp = 0;                      // s0
     *--sp = (uint32_t) pc;          // ra
 
-    proc->sp = (uint32_t) sp;
+    // map kernel pages
+    uint32_t *page_table = (uint32_t *) alloc_pages(1);
+    for (paddr_t paddr = (uint32_t ) __kernel_base;
+        paddr < (paddr_t) __free_ram_end; paddr += PAGE_SIZE) {
+        map_page(page_table, paddr, paddr, PAGE_R | PAGE_W | PAGE_X);
+    }
+
     proc->pid = i + 1;
     proc->state = PROC_RUNNABLE;
+    proc->sp = (uint32_t) sp;
+    proc->page_table = page_table;
 
     return proc;
 }
@@ -93,6 +103,7 @@ struct process *create_idle_process(void)
 void yield(void)
 {
     struct process *next = idle_proc;
+    // find runnable process
     for (int i = 0; i < PROCS_MAX; i++) {
         struct process *proc = &procs[(current_proc->pid + i) % PROCS_MAX];
         if (proc->state == PROC_RUNNABLE && proc->pid > 0) {
@@ -100,20 +111,27 @@ void yield(void)
             break;
         }
     }
-
     // no runnable process, continue current process
     if (next == current_proc)
         return;
 
-    // store stack to sscratch for exception handler
-    __asm__ __volatile__(
-        "csrw sscratch, %[sscratch]\n"
-        :
-        : [sscratch] "r" ((uint32_t) &next->stack[sizeof(next->stack)])
-    );
-
     struct process *prev = current_proc;
     current_proc = next;
+
+    __asm__ __volatile__(
+        // sfence.vma to clear TLB
+        "sfence.vma\n"
+        // switch page table
+        "csrw satp, %[satp]\n"
+        "sfence.vma\n"
+
+        // store stack to sscratch for exception handler
+        "csrw sscratch, %[sscratch]\n"
+        :
+        : [satp] "r" (SATP_SV32 | ((uint32_t) next->page_table / PAGE_SIZE)), 
+          [sscratch] "r" ((uint32_t) &next->stack[sizeof(next->stack)])
+    );
+
     // always switch context at the end of the function
     switch_context(&prev->sp, &next->sp);
 }

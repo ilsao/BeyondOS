@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "vm.h"
 
 #define PROCS_MAX       8
 #define PROC_UNUSED     0
@@ -9,6 +10,7 @@ struct process {
     int pid;
     int state;              // PROC_UNUSED, PROC_RUNNABLE
     vaddr_t sp;
+    uint32_t *page_table;
     uint8_t stack[8192];    // kernel stack
 };
 

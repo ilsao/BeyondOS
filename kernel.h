@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 
-struct stake_frame {
+struct trap_frame {
     uint32_t ra;
     uint32_t gp;
     uint32_t tp;
