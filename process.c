@@ -1,5 +1,8 @@
 #include "process.h"
 
+static struct process procs[PROCS_MAX];
+struct process *current_proc, *idle_proc;
+
 __attribute__((naked))
 void switch_context(uint32_t *prev_sp, uint32_t *next_sp)
 {
@@ -43,8 +46,6 @@ void switch_context(uint32_t *prev_sp, uint32_t *next_sp)
     );
 }
 
-struct process procs[PROCS_MAX];
-
 struct process *create_process(uint32_t pc)
 {
     struct process *proc = NULL;
@@ -80,4 +81,41 @@ struct process *create_process(uint32_t pc)
     proc->state = PROC_RUNNABLE;
 
     return proc;
+}
+
+struct process *create_idle_process(void)
+{
+    struct process *idle_proc = create_process((uint32_t) NULL);
+    idle_proc->pid = 0;
+    return idle_proc;
+}
+
+void yield(void)
+{
+    struct process *next = idle_proc;
+    for (int i = 0; i < PROCS_MAX; i++) {
+        struct process *proc = &procs[(current_proc->pid + i) % PROCS_MAX];
+        if (proc->state == PROC_RUNNABLE && proc->pid > 0) {
+            next = proc;
+            break;
+        }
+    }
+
+    // no runnable process, continue current process
+    if (next == current_proc)
+        return;
+
+    printf("&next->stack[sizeof(next->stack)] = %x\n", &next->stack[sizeof(next->stack)]);
+
+    // store stack to sscratch for exception handler
+    __asm__ __volatile__(
+        "csrw sscratch, %[sscratch]\n"
+        :
+        : [sscratch] "r" ((uint32_t) &next->stack[sizeof(next->stack)])
+    );
+
+    struct process *prev = current_proc;
+    current_proc = next;
+    // always switch context at the end of the function
+    switch_context(&prev->sp, &next->sp);
 }

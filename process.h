@@ -14,3 +14,5 @@ struct process {
 
 void switch_context(uint32_t *prev_sp, uint32_t *next_sp);
 struct process *create_process(uint32_t pc);
+struct process *create_idle_process(void);
+void yield(void);

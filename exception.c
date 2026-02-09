@@ -6,8 +6,9 @@ __attribute__((aligned(4)))     // aligned for riscv inst
 void kernel_entry(void)
 {
     __asm __volatile__(
+        "csrrw sp, sscratch, sp\n" // switch sscratch and sp
+
         /* store registers */
-        "csrw sscratch, sp\n"
         "addi sp, sp, -4 * 31\n"
         "sw ra,  4 * 0(sp)\n"
         "sw gp,  4 * 1(sp)\n"
@@ -42,6 +43,10 @@ void kernel_entry(void)
 
         "csrr a0, sscratch\n"
         "sw a0, 4 * 30(sp)\n"   // also store original sp
+
+        /* reset kernel stack */
+        "addi a0, sp, 4 * 31\n"
+        "csrw sscratch, a0\n"
 
         "mv a0, sp\n"           // make stored regs accessible
         "call handle_trap\n"
