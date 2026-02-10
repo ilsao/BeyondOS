@@ -48,9 +48,10 @@ struct sbiret {
 };
 
 void delay(void);
-void putchar(char ch);
 void *memset(void *buf, char c, size_t n);
 void *memcpy(void *dst, const void *src, size_t n);
 void *strcpy(char *dst, const char *src);
 int strcmp(const char *s1, const char *s2);
+
+struct sbiret sbi_call(long arg0, long arg1, long arg2, long arg3, long arg4, long arg5, long fid, long eid);
 void printf(const char *fmt, ...);

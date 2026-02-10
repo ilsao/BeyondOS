@@ -6,27 +6,38 @@
 
 /* import symbols from the linker */
 extern char __bss[], __bss_end[], __stack_top[], __kernel_base[], __free_ram_end[];
+extern char _binary_shell_bin_start[], _binary_shell_bin_size[];
 extern struct process *current_proc, *idle_proc;
 
-struct process *proc_a, *proc_b;
-void proc_a_entry()
+struct sbiret sbi_call(long arg0, long arg1, long arg2, long arg3, long arg4, long arg5, long fid, long eid)
 {
-    printf("starting process A\n");
-    while (1) {
-        putchar('A');
-        yield();
-        delay();
-    }
+    /* define C variables and combine to correspoding register */
+    register long a0 __asm__("a0") = arg0;
+    register long a1 __asm__("a1") = arg1;
+    register long a2 __asm__("a2") = arg2;
+    register long a3 __asm__("a3") = arg3;
+    register long a4 __asm__("a4") = arg4;
+    register long a5 __asm__("a5") = arg5;
+    register long a6 __asm__("a6") = fid;
+    register long a7 __asm__("a7") = eid;
+
+    /*
+    * __asm__ __volatile__("asm" : output var : input var : clobbered regs)
+    */
+    __asm__ __volatile__(
+        "ecall"
+        : "=r"(a0), "=r"(a1)
+        : "r"(a0), "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a5), "r"(a6), "r"(a7)
+        : "memory"
+    );
+
+    return (struct sbiret){.err = a0, .value = a1};
 }
 
-void proc_b_entry()
+void putchar(char ch)
 {
-    printf("starting process B\n");
-    while (1) {
-        putchar('B');
-        yield();
-        delay();
-    }
+    /* eid = 1 => Console Putchar */
+    sbi_call(ch, 0, 0, 0, 0, 0, 0, 1);
 }
 
 /* kernel main */
@@ -46,8 +57,7 @@ void kernel_main(void)
     idle_proc = create_idle_process();
     current_proc = idle_proc;
 
-    proc_a = create_process((uint32_t) proc_a_entry);
-    proc_b = create_process((uint32_t) proc_b_entry);
+    create_process(_binary_shell_bin_start, (size_t) _binary_shell_bin_size);
 
     yield();
     PANIC("switched to idle process");
