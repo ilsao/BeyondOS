@@ -35,3 +35,5 @@ struct trap_frame {
     uint32_t s11;
     uint32_t sp;
 }__attribute__((packed));
+
+void putchar(char ch);

@@ -1,8 +1,8 @@
+#include "trap.h"
 #include "kernel.h"
 #include "common.h"
 #include "memory.h"
 #include "process.h"
-#include "exception.h"
 
 /* import symbols from the linker */
 extern char __bss[], __bss_end[], __stack_top[], __kernel_base[], __free_ram_end[];
