@@ -1,6 +1,6 @@
 #pragma once
-#include "common.h"
 #include "vm.h"
+#include "../common.h"
 
 #define SSTATUS_SPIE (1 << 5)   // enable interuption after trap
 

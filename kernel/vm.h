@@ -1,6 +1,6 @@
 #pragma once
-#include "common.h"
 #include "memory.h"
+#include "../common.h"
 
 #define SATP_SV32   (1u << 31)  // enable satp paging
 #define PAGE_V      (1 << 0)    // valid bit

@@ -1,8 +1,9 @@
 #pragma once
 #include "kio.h"
-#include "common.h"
+#include "trap.h"
 #include "kernel.h"
 #include "process.h"
+#include "../common.h"
 
 #define SYS_UNIMP   0
 #define SYS_PUTCHAR 1

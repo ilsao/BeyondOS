@@ -1,6 +1,6 @@
 #pragma once
-#include "common.h"
 #include "syscall.h"
+#include "../common.h"
 
 #define SCAUSE_ECALL 8
 

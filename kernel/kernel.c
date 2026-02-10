@@ -1,6 +1,5 @@
-#include "trap.h"
 #include "kernel.h"
-#include "common.h"
+#include "trap.h"
 #include "memory.h"
 #include "process.h"
 
