@@ -7,6 +7,7 @@
 #define PROCS_MAX       8
 #define PROC_UNUSED     0
 #define PROC_RUNNABLE   1   
+#define PROC_EXITED     2
 
 #define USER_BASE 0x1000000
 
@@ -23,3 +24,4 @@ void switch_context(uint32_t *prev_sp, uint32_t *next_sp);
 void yield(void);
 struct process *create_process(const void *image, size_t image_size);
 struct process *create_idle_process(void);
+void exit_proc(void);

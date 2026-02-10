@@ -159,3 +159,11 @@ struct process *create_idle_process(void)
     idle_proc->pid = 0;
     return idle_proc;
 }
+
+void exit_proc(void)
+{
+    printf("process pid %d exited\n", current_proc->pid);
+    current_proc->state = PROC_EXITED;
+    yield();
+    PANIC("UNREACHABLE");
+}
