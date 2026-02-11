@@ -1,10 +1,58 @@
-# Introduction
+# BeyondOS
 
-This project is extended from OS in 1000 lines. 
+A simple, modular operating system for the RISC-V 32-bit architecture. This repository extends from [OS in 1000 lines](https://1000os.seiya.me/) with improved clarity and extendability. 
 
-# Getting Started
+## Features
+- **Process Management**: Context switching and cooperative multitasking
+- **Virtual Memory**: Page table for virtual address and physical address translation
+- **System Calls**: User-kernel mode transitions
+- **File System**: Simple file system in .tar with read/write operations via VirtIO disk
 
-## Installation
+## Planned Features
+- **Memory Allocator**: The memory allocator in BeyondOS now can only support page allocation and without release functionality. It's planned to designe a more generalized allocator with buddy system
+- **Scheduler**: BeyondOS supports cooperative multitasking. It's time for the operating system to support preemptive scheduling
+
+## Project Organization
+
+```
+.
+├── common.c
+├── common.h
+├── disk                # example disk
+│   ├── hello.txt
+│   └── meow.txt
+├── kernel
+│   ├── file.c          # file system
+│   ├── file.h
+│   ├── kernel.c        # kernel main
+│   ├── kernel.h
+│   ├── kernel.ld       # kernel linker script
+│   ├── kio.c           # kernel input/output
+│   ├── kio.h
+│   ├── memory.c        # manage the memory allocate
+│   ├── memory.h
+│   ├── process.c       # process and context switching
+│   ├── process.h
+│   ├── syscall.c       # system call implementation
+│   ├── syscall.h
+│   ├── trap.c          # trap and exception handling
+│   ├── trap.h
+│   ├── virtio_disk.c   # VirtIO_disk driver
+│   ├── virtio_disk.h
+│   ├── vm.c            # page table management
+│   └── vm.h
+├── user
+│   ├── shell.c         # simple shell implementation
+│   ├── user.c          # user space library functions
+│   ├── user.h
+│   └── user.ld         # user program linker script
+├── Makefile
+└── README.md
+```
+
+## Getting Started
+
+### Installation
 
 1. Clone the repository
 
@@ -20,10 +68,21 @@ sudo apt update && sudo apt install -y clang llvm lld qemu-system-riscv32 curl
 curl -LO https://github.com/qemu/qemu/raw/v8.0.4/pc-bios/opensbi-riscv32-generic-fw_dynamic.bin
 ```
 
-## Running
+### Running
 
-- If you are Ubuntu users (or other linux systems)
+Build and run the OS:
 
-``` bash
-./run.sh
+```shell
+make 
 ```
+
+Clean build artifacts:
+```bash
+make clean
+```
+
+BeyondOS provides these command:
+- `hello` - Test printf functionality
+- `readfile` - Read `hello.txt` from disk
+- `writefile` - Write content to `hello.txt`
+- `exit` - Exit the shell program
