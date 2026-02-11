@@ -9,7 +9,7 @@ A simple, modular operating system for the RISC-V 32-bit architecture. This repo
 - **File System**: Simple file system in .tar with read/write operations via VirtIO disk
 
 ## Planned Features
-- **Memory Allocator**: The memory allocator in BeyondOS now can only support page allocation and without release functionality. It's planned to designe a more generalized allocator with buddy system
+- **Memory Allocator**: The memory allocator in BeyondOS currently support page allocation only, without release functionality. It's planned to designe a more generalized allocator with buddy system
 - **Scheduler**: BeyondOS supports cooperative multitasking. It's time for the operating system to support preemptive scheduling
 
 ## Project Organization
@@ -81,7 +81,7 @@ Clean build artifacts:
 make clean
 ```
 
-BeyondOS provides these command:
+BeyondOS provides these commands:
 - `hello` - Test printf functionality
 - `readfile` - Read `hello.txt` from disk
 - `writefile` - Write content to `hello.txt`
