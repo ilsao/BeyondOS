@@ -31,7 +31,7 @@ QEMU_FLAGS := -machine virt -bios default -nographic -serial mon:stdio \
 			  -drive id=drive0,file=disk.tar,format=raw,if=none \
 			  -device virtio-blk-device,drive=drive0,bus=virtio-mmio-bus.0
 
-.PHONY: all clean run disk
+.PHONY: all clean run
 
 all: run
 
@@ -39,11 +39,9 @@ all: run
 run: $(KERNEL_ELF)
 	$(QEMU) $(QEMU_FLAGS) -kernel $(KERNEL_ELF)
 
-disk: 
-	(cd disk && tar cf ../disk.tar --format=ustar *.txt)
-
 # Build the kernel
 $(KERNEL_ELF): $(KERNEL_SRCS) $(COMMON_SRCS) $(SHELL_OBJ) $(KERNEL_LD) disk
+	(cd disk && tar cf ../disk.tar --format=ustar *.txt)
 	$(CC) $(CFLAGS) -Wl,-T$(KERNEL_LD) -Wl,-Map=kernel.map -o $@ \
 		$(KERNEL_SRCS) $(COMMON_SRCS) $(SHELL_OBJ)
 

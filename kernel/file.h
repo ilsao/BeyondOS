@@ -38,3 +38,4 @@ struct file
 
 void fs_init(void);
 void fs_flush(void);
+struct file *fs_lookup(const char *filename);

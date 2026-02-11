@@ -1,27 +1,39 @@
 #include "virtio_disk.h"
 
-static uint32_t virtio_reg_read32(unsigned offset)
-{
+struct virtio_virtq *blk_request_vq;
+struct virtio_blk_req *blk_req;
+paddr_t blk_req_paddr;
+uint64_t blk_capacity;
+
+uint32_t virtio_reg_read32(unsigned offset) {
     return *((volatile uint32_t *) (VIRTIO_BLK_PADDR + offset));
 }
 
-static uint64_t virtio_reg_read64(unsigned offset)
-{
+uint64_t virtio_reg_read64(unsigned offset) {
     return *((volatile uint64_t *) (VIRTIO_BLK_PADDR + offset));
 }
 
-static void virtio_reg_write32(unsigned offset, uint32_t value)
-{
+void virtio_reg_write32(unsigned offset, uint32_t value) {
     *((volatile uint32_t *) (VIRTIO_BLK_PADDR + offset)) = value;
 }
 
-static void virtio_reg_fetch_and_or32(unsigned offset, uint32_t value)
-{
+void virtio_reg_fetch_and_or32(unsigned offset, uint32_t value) {
     virtio_reg_write32(offset, virtio_reg_read32(offset) | value);
 }
 
-static struct virtio_virtq *virtq_init(unsigned index)
-{
+bool virtq_is_busy(struct virtio_virtq *vq) {
+    return vq->last_used_index != *vq->used_index;
+}
+
+void virtq_kick(struct virtio_virtq *vq, int desc_index) {
+    vq->avail.ring[vq->avail.index % VIRTQ_ENTRY_NUM] = desc_index;
+    vq->avail.index++;
+    __sync_synchronize();
+    virtio_reg_write32(VIRTIO_REG_QUEUE_NOTIFY, vq->queue_index);
+    vq->last_used_index++;
+}
+
+struct virtio_virtq *virtq_init(unsigned index) {
     paddr_t virtq_paddr = alloc_pages(align_up(sizeof(struct virtio_virtq), PAGE_SIZE) / PAGE_SIZE);
     struct virtio_virtq *vq = (struct virtio_virtq *) virtq_paddr;
     vq->queue_index = index;
@@ -32,13 +44,7 @@ static struct virtio_virtq *virtq_init(unsigned index)
     return vq;
 }
 
-struct virtio_virtq *blk_request_vq;
-struct virtio_blk_req *blk_req;
-paddr_t blk_req_paddr;
-uint64_t blk_capacity;
-
-void virtio_blk_init(void)
-{
+void virtio_blk_init(void) {
     if (virtio_reg_read32(VIRTIO_REG_MAGIC) != 0x74726976)
         PANIC("virtio: invalid magic value");
     if (virtio_reg_read32(VIRTIO_REG_VERSION) != 1)
@@ -46,20 +52,13 @@ void virtio_blk_init(void)
     if (virtio_reg_read32(VIRTIO_REG_DEVICE_ID) != VIRTIO_DEVICE_BLK)
         PANIC("virtio: invalid device id");
 
-    // 1. reset the device
     virtio_reg_write32(VIRTIO_REG_DEVICE_STATUS, 0);
-    // 2. set the acknowledge bit
     virtio_reg_fetch_and_or32(VIRTIO_REG_DEVICE_STATUS, VIRTIO_STATUS_ACK);
-    // 3. set the driver bit
     virtio_reg_fetch_and_or32(VIRTIO_REG_DEVICE_STATUS, VIRTIO_STATUS_DRIVER);
-    // 4. set the page size
     virtio_reg_write32(VIRTIO_REG_PAGE_SIZE, PAGE_SIZE);
-    // 5. init the virtq
     blk_request_vq = virtq_init(0);
-    // 6. set the driver_ok bit
     virtio_reg_write32(VIRTIO_REG_DEVICE_STATUS, VIRTIO_STATUS_DRIVER_OK);
 
-    // get the capacity
     blk_capacity = virtio_reg_read64(VIRTIO_REG_DEVICE_CONFIG + 0) * SECTOR_SIZE;
     printf("virtio-blk: capacity is %d bytes\n", (int)blk_capacity);
 
@@ -67,22 +66,7 @@ void virtio_blk_init(void)
     blk_req = (struct virtio_blk_req *) blk_req_paddr;
 }
 
-static void virtq_kick(struct virtio_virtq *vq, int desc_index) 
-{
-    vq->avail.ring[vq->avail.index % VIRTQ_ENTRY_NUM] = desc_index;
-    vq->avail.index++;
-    __sync_synchronize();
-    virtio_reg_write32(VIRTIO_REG_QUEUE_NOTIFY, vq->queue_index);
-    vq->last_used_index++;
-}
-
-static bool virtq_is_busy(struct virtio_virtq *vq) 
-{
-    return vq->last_used_index != *vq->used_index;
-}
-
-void read_write_disk(void *buf, unsigned sector, int is_write) 
-{
+void read_write_disk(void *buf, unsigned sector, int is_write) {
     if (sector >= blk_capacity / SECTOR_SIZE) {
         printf("virtio: tried to read/write sector=%d, but capacity is %d\n",
               sector, blk_capacity / SECTOR_SIZE);
@@ -91,6 +75,7 @@ void read_write_disk(void *buf, unsigned sector, int is_write)
 
     blk_req->sector = sector;
     blk_req->type = is_write ? VIRTIO_BLK_T_OUT : VIRTIO_BLK_T_IN;
+
     if (is_write)
         memcpy(blk_req->data, buf, SECTOR_SIZE);
 
@@ -110,7 +95,6 @@ void read_write_disk(void *buf, unsigned sector, int is_write)
     vq->descs[2].flags = VIRTQ_DESC_F_WRITE;
 
     virtq_kick(vq, 0);
-
     while (virtq_is_busy(vq))
         ;
 

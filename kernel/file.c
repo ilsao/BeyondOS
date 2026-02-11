@@ -67,8 +67,8 @@ void fs_flush(void)
         header->type = '0';
 
         int filesz = file->size;
-        for (int i = sizeof(header->size); i > 0; i--) {
-            header->size[i - 1] = (filesz % 8) + '0';
+        for (int j = sizeof(header->size); j > 0; j--) {
+            header->size[j - 1] = (filesz % 8) + '0';
             filesz /= 8;
         }
 
@@ -78,17 +78,27 @@ void fs_flush(void)
             checksum += (unsigned char) disk[off + j];
         }
 
-        for (int i = 5; i >= 0; i--) {
-            header->checksum[i] = (checksum % 8) + '0';
+        for (int j = 5; j >= 0; j--) {
+            header->checksum[j] = (checksum % 8) + '0';
             checksum /= 8;
         }
 
-        memcpy(header->data, file->data, filesz);
-        off += align_up(sizeof(struct tar_header) + filesz, SECTOR_SIZE);
+        memcpy(header->data, file->data, file->size);
+        off += align_up(sizeof(struct tar_header) + file->size, SECTOR_SIZE);
     }
 
     for (unsigned sector = 0; sector < sizeof(disk) / SECTOR_SIZE; sector++)
         read_write_disk(&disk[sector * SECTOR_SIZE], sector, true);
     
     printf("wrote %d bytes to disk\n", sizeof(disk));
+}
+
+struct file *fs_lookup(const char *filename)
+{
+    for (int i = 0; i < FILE_MAX; i++) {
+        struct file *file = &files[i];
+        if (!strcmp(file->name, filename))
+            return file;
+    }
+    return NULL;
 }

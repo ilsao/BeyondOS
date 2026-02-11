@@ -4,6 +4,7 @@
 #include "../common.h"
 
 #define SSTATUS_SPIE (1 << 5)   // enable interuption after trap
+#define SSTATUS_SUM  (1 << 18)  // allow the kernel to access the user space
 
 #define PROCS_MAX       8
 #define PROC_UNUSED     0
