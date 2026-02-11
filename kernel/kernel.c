@@ -3,6 +3,7 @@
 #include "memory.h"
 #include "process.h"
 #include "virtio_disk.h"
+#include "file.h"
 
 extern char __bss[], __bss_end[], __stack_top[], __kernel_base[], __free_ram_end[];
 extern char _binary_shell_bin_start[], _binary_shell_bin_size[];
@@ -31,12 +32,7 @@ void kernel_main(void)
 
     virtio_blk_init();
 
-    char buf[SECTOR_SIZE];
-    read_write_disk(buf, 0, false);
-    printf("first sector %s\n", buf);
-
-    strcpy(buf, "hello from kernel\n");
-    read_write_disk(buf, 0, true);
+    fs_init();
 
     printf("\n\nHello, World!\n");
 
