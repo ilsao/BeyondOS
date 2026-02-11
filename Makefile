@@ -13,7 +13,7 @@ USER_DIR   := user
 # Source files
 COMMON_SRCS := common.c
 SHELL_SRCS := $(addprefix $(USER_DIR)/, shell.c user.c)
-KERNEL_SRCS := $(addprefix $(KERNEL_DIR)/, kernel.c memory.c trap.c process.c vm.c syscall.c kio.c)
+KERNEL_SRCS := $(addprefix $(KERNEL_DIR)/, kernel.c memory.c trap.c process.c vm.c syscall.c kio.c virtio_disk.c)
 
 # Linker scripts
 KERNEL_LD := $(KERNEL_DIR)/kernel.ld
@@ -27,7 +27,9 @@ KERNEL_ELF := kernel.elf
 
 # QEMU flags
 QEMU_FLAGS := -machine virt -bios default -nographic -serial mon:stdio \
-              --no-reboot -d unimp,guest_errors,int,cpu_reset -D qemu.log
+              --no-reboot -d unimp,guest_errors,int,cpu_reset -D qemu.log\
+			  -drive id=drive0,file=lorem.txt,format=raw,if=none \
+			  -device virtio-blk-device,drive=drive0,bus=virtio-mmio-bus.0
 
 .PHONY: all clean run
 

@@ -145,6 +145,9 @@ struct process *create_process(const void *image, size_t image_size)
         map_page(page_table, USER_BASE + off, page, PAGE_U | PAGE_R | PAGE_W | PAGE_X);
     }
 
+    // map virtio disk
+    map_page(page_table, VIRTIO_BLK_PADDR, VIRTIO_BLK_PADDR, PAGE_R | PAGE_W);
+
     proc->pid = i + 1;
     proc->state = PROC_RUNNABLE;
     proc->sp = (uint32_t) sp;

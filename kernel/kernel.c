@@ -2,6 +2,7 @@
 #include "trap.h"
 #include "memory.h"
 #include "process.h"
+#include "virtio_disk.h"
 
 extern char __bss[], __bss_end[], __stack_top[], __kernel_base[], __free_ram_end[];
 extern char _binary_shell_bin_start[], _binary_shell_bin_size[];
@@ -27,6 +28,15 @@ void kernel_main(void)
 
     // register exception entry
     WRITE_CSR(stvec, (uint32_t) kernel_entry);
+
+    virtio_blk_init();
+
+    char buf[SECTOR_SIZE];
+    read_write_disk(buf, 0, false);
+    printf("first sector %s\n", buf);
+
+    strcpy(buf, "hello from kernel\n");
+    read_write_disk(buf, 0, true);
 
     printf("\n\nHello, World!\n");
 

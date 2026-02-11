@@ -1,5 +1,6 @@
 #pragma once
 #include "vm.h"
+#include "virtio_disk.h"
 #include "../common.h"
 
 #define SSTATUS_SPIE (1 << 5)   // enable interuption after trap
